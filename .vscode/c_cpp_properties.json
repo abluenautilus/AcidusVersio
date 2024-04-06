@@ -1,0 +1,40 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/Users/jonask/Music/Daisy/libDaisy",
+                "/Users/jonask/Music/Daisy/DaisySP",
+                "/Users/jonask/Music/Daisy/Projects/Versio/AcidusVersio/open303/Source/DSPCode"
+            ],
+            "defines": [],
+            "macFrameworkPath": [
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/local/fsl/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "macos-clang-arm64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "libDaisy",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/Users/jonask/Music/Daisy/libDaisy",
+                "/Users/jonask/Music/Daisy/DaisySP",
+                "/Users/jonask/Music/Projects/Versio/AcidusVersio/open303/Source/DSPCode"
+            ],
+            "defines": [],
+            "macFrameworkPath": [
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/local/fsl/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "macos-clang-arm64"
+        }
+    ],
+    "version": 4
+}

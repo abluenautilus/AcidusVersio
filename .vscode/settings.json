@@ -1,0 +1,17 @@
+{
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/Users/jonask/Music/Daisy/Projects/Versio/AcidusVersio/build",
+            "binaryPath": "/Users/jonask/Music/Daisy/Projects/Versio/AcidusVersio/build/AcidusVersio.elf",
+            "binaryArgs": []
+        }
+    ],
+    "files.associations": {
+        "cstring": "cpp",
+        "random": "cpp",
+        "string": "cpp",
+        "vector": "cpp",
+        "iostream": "cpp",
+        "list": "cpp"
+    }
+}
