@@ -24,9 +24,14 @@ bool slideToNextNote;
 
 bool inCalibration;
 const int calibration_max = 65536;
-uint16_t calibration_Offset = 2116;
-uint16_t calibration_UnitsPerVolt = 12680;
-const uint16_t base_octave = 1;
+const int calibration_min = 63200;
+uint16_t calibration_Offset = 64262;
+uint16_t calibration_UnitsPerVolt = 12826;
+
+const uint16_t calibration_thresh = calibration_max - 200;
+const uint16_t base_octave = 2;
+const uint16_t max_midi_note = (12*(base_octave + 6)); 
+const uint16_t min_midi_note = (base_octave * 12);
 
 // Persistence
 struct Settings {
@@ -77,8 +82,15 @@ void doTriggerReceived() {
     // Convert CV from tuning jack to midi note number using calibrated scaling
     Note currentNote = Note();
     float raw_cv = hw.knobs[hw.KNOB_0].GetRawValue();
-    float volts = DSY_CLAMP((calibration_max - calibration_Offset - raw_cv)/calibration_UnitsPerVolt,0,5.0);
-    float midi_pitch = round(((volts) * 12) + (12 * base_octave));
+    float volts;
+    if (raw_cv > calibration_min) {
+        volts = 0.0;
+    } else {
+        volts = DSY_CLAMP((calibration_Offset - raw_cv)/calibration_UnitsPerVolt,0,5.0);
+    }
+    float midi_pitch = round(((volts) * 12) + (12 * (base_octave + 1)));
+    if (midi_pitch > max_midi_note) midi_pitch = max_midi_note;
+    if (midi_pitch < min_midi_note) midi_pitch = min_midi_note;
     Note current_note = Note(midi_pitch);
 
     // Manage note list
@@ -86,9 +98,11 @@ void doTriggerReceived() {
         tb303.allNotesOff();
     } else {
         tb303.trimNoteList();
-        // Retriggering these gives slides a new envelope, uncomment for different slide effect
-        // tb303.mainEnv.trigger();
-        // tb303.ampEnv.reset();
+        if (mode == BABYFISH) {
+            // Retriggering these gives slides a new envelope
+            tb303.mainEnv.trigger();
+            tb303.ampEnv.reset();
+        }
     }
 
     int velocity = 150; // What should base note velocity be? 
@@ -100,6 +114,8 @@ void doCalibration() {
 
     inCalibration = true;
     uint8_t numSamples = 10; // Take this many samples per step
+
+    Metro md;
 
     // STEP ONE - RELEASE BUTTON
     hw.tap.Debounce();
@@ -122,9 +138,9 @@ void doCalibration() {
     while (!hw.tap.FallingEdge()) {
         hw.tap.Debounce();
     }
-    float zero_value = hw.knobs[0].GetRawValue();
+    float onevolt_value = hw.knobs[0].GetRawValue();
 
-    // STEP TWO - ONE VOLT
+    // STEP TWO - TWO VOLTS
     hw.SetLed(0,0,0,1);
     hw.SetLed(1,0,0,1);
     hw.SetLed(2,0,0,0);
@@ -141,7 +157,7 @@ void doCalibration() {
         hw.knobs[0].Process();
         total = total + hw.knobs[0].GetRawValue();
     }
-    float onevolt_value = total/numSamples;
+    float twovolt_value = total/numSamples;
 
     // STEP TWO - ONE THREE VOLTS
     hw.SetLed(0,0,1,1);
@@ -164,20 +180,20 @@ void doCalibration() {
     float threevolt_value = total/numSamples;
 
     // Estimate calibration values
-    uint16_t offset = calibration_max - zero_value;
-    uint16_t first_estimate = calibration_max - offset - onevolt_value;
-    float second_estimate = (float)(calibration_max - offset - threevolt_value)/3;
+    uint16_t first_estimate = (float)(onevolt_value - twovolt_value );
+    float second_estimate = (float)(twovolt_value - threevolt_value );
     float avg_estimate = (first_estimate + second_estimate)/2;
+    uint16_t offset = onevolt_value + avg_estimate;
 
     // Save values to QSPI
     calibration_Offset = offset;
     calibration_UnitsPerVolt = (uint16_t)avg_estimate;
+    hw.seed.PrintLine("Offset %d upv %d",calibration_Offset,calibration_UnitsPerVolt);
     saveData();
 
     inCalibration = false;
 
 }
-
 
 int main(void)
 {
@@ -198,11 +214,17 @@ int main(void)
     hw.StartAudio(AudioCallback);
 
     Settings defaults;
-    defaults.calibration_Offset = 2116;
-    defaults.calibration_UnitsPerVolt = 12680;
+    defaults.calibration_Offset = calibration_Offset;
+    defaults.calibration_UnitsPerVolt = calibration_UnitsPerVolt;
     storage.Init(defaults);
 
     loadData();
+
+    // If we don't have good saved data, revert to defaults
+    if (calibration_UnitsPerVolt < 400 || calibration_UnitsPerVolt > 20000) {
+        storage.RestoreDefaults();  
+        loadData();
+    }
 
     // Set up 303
     tb303.setSampleRate(sampleRate);
@@ -297,6 +319,8 @@ int main(void)
             hw.SetLed(hw.LED_1,triggerIn,triggerIn/1.7,0);
             hw.UpdateLeds();
         }
+
+
 
     }
 
