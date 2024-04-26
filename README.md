@@ -4,4 +4,4 @@ This is a port of Robin Schmidt's open303 code.
 
 ![Instructions](docs/AcidusVersioInstructions.jpg)
 
-Read the full manual ![here](docs/AcidusVersioManual.pdf)
+Read the full manual [here](docs/AcidusVersioManual.pdf)
