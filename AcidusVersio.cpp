@@ -99,7 +99,7 @@ void doTriggerReceived() {
     if (!slideToNextNote) {
         tb303.allNotesOff();
     } else {
-        tb303.trimNoteList();
+        tb303.trimNoteList(); 
         if (mode == BABYFISH) {
             // Retriggering these gives slides a new envelope
             tb303.mainEnv.trigger();
