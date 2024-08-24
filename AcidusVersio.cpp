@@ -27,6 +27,8 @@ const int calibration_max = 65536;
 const int calibration_min = 63200;
 uint16_t calibration_Offset = 64262;
 uint16_t calibration_UnitsPerVolt = 12826;
+uint16_t calibration_UnitsPerVolt_ADC = 12826;
+uint16_t calibration_UnitsPerVolt_DAC = 0;
 
 const uint16_t calibration_thresh = calibration_max - 200;
 const uint16_t base_octave = 2;
@@ -110,12 +112,21 @@ void doTriggerReceived() {
 
 }
 
+void waitForButton() {
+    while (!hw.tap.RisingEdge()) {
+        hw.tap.Debounce();
+    }
+    while (!hw.tap.FallingEdge()) {
+        hw.tap.Debounce();
+    }
+    System::Delay(200);
+}
+
+
 void doCalibration() {
 
     inCalibration = true;
     uint8_t numSamples = 10; // Take this many samples per step
-
-    Metro md;
 
     // STEP ONE - RELEASE BUTTON
     hw.tap.Debounce();
@@ -132,12 +143,7 @@ void doCalibration() {
     hw.SetLed(2,0,0,0);
     hw.SetLed(3,0,0,0);
     hw.UpdateLeds();
-    while (!hw.tap.RisingEdge()) {
-        hw.tap.Debounce();
-    }
-    while (!hw.tap.FallingEdge()) {
-        hw.tap.Debounce();
-    }
+    waitForButton();
     float onevolt_value = hw.knobs[0].GetRawValue();
 
     // STEP TWO - TWO VOLTS
@@ -146,12 +152,7 @@ void doCalibration() {
     hw.SetLed(2,0,0,0);
     hw.SetLed(3,0,0,0);
     hw.UpdateLeds();
-    while (!hw.tap.RisingEdge()) {
-        hw.tap.Debounce();
-    }
-    while (!hw.tap.FallingEdge()) {
-        hw.tap.Debounce();
-    }
+    waitForButton();
     float total = 0;
     for (uint8_t x = 0; x < numSamples; ++x) {
         hw.knobs[0].Process();
@@ -165,12 +166,7 @@ void doCalibration() {
     hw.SetLed(2,0,1,1);
     hw.SetLed(3,0,0,0);
     hw.UpdateLeds();
-    while (!hw.tap.RisingEdge()) {
-        hw.tap.Debounce();
-    }
-    while (!hw.tap.FallingEdge()) {
-        hw.tap.Debounce();
-    }
+    waitForButton();
     
     total = 0;
     for (uint8_t x = 0; x < numSamples; ++x) {
@@ -187,7 +183,7 @@ void doCalibration() {
 
     // Save values to QSPI
     calibration_Offset = offset;
-    calibration_UnitsPerVolt = (uint16_t)avg_estimate;
+    calibration_UnitsPerVolt = round(avg_estimate);
     hw.seed.PrintLine("Offset %d upv %d",calibration_Offset,calibration_UnitsPerVolt);
     saveData();
 
