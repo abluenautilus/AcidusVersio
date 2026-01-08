@@ -1,7 +1,7 @@
 ./development
 ./video
 ./Research
-./build
 .DS_Store
 ./open303/Build
 ./todo.txt
+build
